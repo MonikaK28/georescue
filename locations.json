@@ -1,0 +1,28 @@
+{
+  "_note": "Used only with USE_OSMNX=1. Hospital specialties and bed counts are ILLUSTRATIVE assumptions, not official data. Coordinates are approximate; they snap to the nearest road.",
+  "center": [13.0492, 77.5137],
+  "origins": [
+    {"name": "T Dasarahalli",       "lat": 13.0492, "lon": 77.5137},
+    {"name": "Chikkabanavara",      "lat": 13.0804, "lon": 77.5019},
+    {"name": "Nelamangala",         "lat": 13.1020, "lon": 77.3740},
+    {"name": "Nagasandra",          "lat": 13.0462, "lon": 77.5080},
+    {"name": "Hesarghatta Road",    "lat": 13.0600, "lon": 77.4900},
+    {"name": "HSR Layout",          "lat": 12.9121, "lon": 77.6446},
+    {"name": "Silk Board",          "lat": 12.9177, "lon": 77.6228},
+    {"name": "BTM Layout",          "lat": 12.9166, "lon": 77.6101},
+    {"name": "Koramangala",         "lat": 12.9352, "lon": 77.6245},
+    {"name": "Jayanagar",           "lat": 12.9250, "lon": 77.5938}
+  ],
+  "hospitals": [
+    {"name": "Prakriya Hospital, T Dasarahalli",          "lat": 13.0465, "lon": 77.5076, "specialties": ["trauma", "general"], "beds": 4},
+    {"name": "People Tree Hospital, Tumkur Road",         "lat": 13.0305, "lon": 77.5350, "specialties": ["trauma", "cardiac", "general"], "beds": 5},
+    {"name": "NRR Hospital, Chikkabanavara",              "lat": 13.0804, "lon": 77.5019, "specialties": ["general", "trauma"], "beds": 3},
+    {"name": "Nelamangala Taluk General Hospital",        "lat": 13.1020, "lon": 77.3740, "specialties": ["general", "trauma"], "beds": 3},
+    {"name": "Govt General Hospital, Dasarahalli",        "lat": 13.0492, "lon": 77.5137, "specialties": ["general"], "beds": 2},
+    {"name": "St. John's Medical College Hospital",       "lat": 12.9290, "lon": 77.6197, "specialties": ["trauma", "general"], "beds": 4},
+    {"name": "Manipal Hospital, Old Airport Road",        "lat": 12.9585, "lon": 77.6484, "specialties": ["trauma", "cardiac", "stroke", "general"], "beds": 5},
+    {"name": "NIMHANS",                                   "lat": 12.9416, "lon": 77.5963, "specialties": ["stroke", "trauma"], "beds": 3},
+    {"name": "Apollo Hospital, Bannerghatta Road",        "lat": 12.8951, "lon": 77.5991, "specialties": ["cardiac", "general"], "beds": 3},
+    {"name": "Jayadeva Institute of Cardiology",          "lat": 12.9178, "lon": 77.5993, "specialties": ["cardiac"], "beds": 2}
+  ]
+}

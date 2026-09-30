@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GeoRescue AI - Dispatch console</title>
+<link rel="stylesheet" href="/vendor/leaflet.css">
+<style>
+:root{--bg:#0b1220;--pn:#111a2e;--ln:#1f2b46;--fg:#e6edf7;--mut:#8a9bb8;--red:#ef4444;--teal:#2dd4bf;--grn:#22c55e;--amb:#f59e0b;--blu:#38bdf8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px system-ui,-apple-system,Segoe UI,sans-serif}
+header{height:54px;display:flex;align-items:center;gap:14px;padding:0 16px;background:var(--pn);border-bottom:1px solid var(--ln)}
+.brand{display:flex;align-items:center;gap:10px;flex:1}.brand b{font-size:17px;letter-spacing:.02em}.brand small{display:block;color:var(--mut);font-size:11px}
+.pill{padding:3px 10px;border-radius:99px;font-size:12px;background:#1f2b46;color:var(--mut)}.pill.on{background:#0f3d2e;color:var(--grn)}
+#clock{font:600 18px ui-monospace,monospace;color:var(--teal);min-width:56px;text-align:right}
+main{display:flex;height:calc(100vh - 54px)}#maps{flex:1;display:flex;min-width:0}
+.pane{flex:1;position:relative;min-width:0;border-right:1px solid var(--ln)}.single #paneL{display:none}
+.map{position:absolute;inset:0;background:#0e1a2f}.dim{filter:invert(1) hue-rotate(180deg) brightness(.75) saturate(.5)}
+.tag,.cmp{position:absolute;left:10px;z-index:500;background:rgba(11,18,32,.88);border:1px solid var(--ln);border-radius:8px;padding:6px 10px;font-size:12px}
+.tag{top:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}.bad{color:var(--red)}.good{color:var(--grn)}.cmp{bottom:14px;font-size:13px}.cmp b{font-size:16px}
+.chip{background:#0f3d2e;color:var(--grn);border-radius:6px;padding:1px 6px;margin-left:6px}
+aside{width:390px;overflow:auto;background:var(--pn);padding:12px 14px}
+h2{font-size:11px;margin:16px 0 7px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}h2:first-child{margin-top:0}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button,select{padding:7px 10px;border:1px solid var(--ln);background:#182440;color:var(--fg);border-radius:8px;cursor:pointer;font:inherit}
+button:hover{border-color:var(--blu)}button.on{border-color:var(--teal);color:var(--teal)}button.go{background:var(--grn);border-color:var(--grn);color:#04210f;font-weight:600}
+button.no{background:transparent;border-color:var(--red);color:var(--red)}button.hot{border-color:var(--red);color:#fca5a5}
+.kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.kpi div{background:#0e1830;border:1px solid var(--ln);padding:9px;border-radius:8px}
+.kpi b{display:block;font-size:22px;color:var(--teal)}.kpi span{font-size:11px;color:var(--mut)}
+#prop{background:#0e1830;border:1px solid var(--ln);border-radius:10px;padding:10px}ol,ul{padding-left:18px;margin:6px 0}li{margin:3px 0}
+.decide{font-weight:600}.observe{color:var(--mut)}small,.mut{color:var(--mut)}a{color:var(--blu)}
+table{width:100%;border-collapse:collapse;margin-top:6px}td{padding:4px 2px;border-bottom:1px solid var(--ln)}td:last-child{text-align:right;font-weight:600}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#000c;border:1px solid var(--ln);padding:9px 14px;border-radius:8px;display:none;z-index:9999}
+.amb{width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--c) 25%,transparent);display:grid;place-items:center;animation:pl 1.6s infinite}
+.amb i{width:0;height:0;border:7px solid transparent;border-bottom:16px solid var(--c);border-top:0;transition:transform .3s}
+@keyframes pl{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 60%,transparent)}100%{box-shadow:0 0 0 16px transparent}}
+@media(max-width:900px){main{flex-direction:column;height:auto}#maps{height:62vh;flex-direction:column}aside{width:100%}}
+</style></head><body>
+<header><div class="brand"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="9" fill="#ef4444"/><path d="M17 8v18M8 17h18" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M6 28c6-2 10 1 16-3s6-9 6-9" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-dasharray="3 3"/></svg>
+<div><b>GeoRescue AI</b><small>Minutes saved, with reasons</small></div></div>
+<span class="pill" id="conn">connecting</span><span class="mut" style="font-size:11px">MISSION</span><span id="clock">0:00</span></header>
+<main><section id="maps">
+<div class="pane" id="paneL"><div class="tag bad">Without GeoRescue</div><div class="map" id="mapL"></div><div class="cmp" id="cmpL">Conventional route</div></div>
+<div class="pane"><div class="tag good">With GeoRescue</div><div class="map" id="mapR"></div><div class="cmp" id="cmpR">Dispatch to begin</div></div>
+</section>
+<aside>
+<h2>Scenario</h2>
+<div class="row"><select id="origin" title="Start point"></select><select id="need"><option value="trauma">Trauma</option><option value="cardiac">Cardiac</option><option value="stroke">Stroke</option><option value="general">General</option></select>
+<button onclick="dispatch()">1. Dispatch</button><button id="simbtn" onclick="toggleSim()">2. Start</button><select id="speed" title="Simulation speed"><option value="1000">Normal</option><option value="1800">Slow</option><option value="500">Fast</option></select></div>
+<div class="row" style="margin-top:6px"><button class="hot" onclick="incident('closure')">Accident ahead</button><button class="hot" onclick="incident('congestion')">Congestion</button>
+<button class="hot" onclick="wrong=5;toast('Wrong turn')">Wrong turn</button><button class="hot" onclick="fillHosp()">Hospital full</button></div>
+<div class="row" style="margin-top:6px"><button id="bSplit" class="on" onclick="toggleSplit()">Split view</button><button id="bStreet" onclick="toggleStreet()">Street map</button>
+<button onclick="post('/reset').then(()=>location.reload())">Reset</button><label style="padding:7px 4px"><input type="checkbox" id="auto"> Auto-approve</label></div>
+<h2>Destination</h2><div id="dest"><small>Dispatch to rank hospitals by ETA and capacity.</small></div>
+<h2>Agent proposal</h2><div id="prop"><small>No pending proposal. Vehicle is on its best route.</small></div>
+<h2>Results</h2>
+<div class="kpi"><div><b id="saved">0:00</b><span>time saved</span></div><div><b id="appr">0</b><span>reroutes approved</span></div><div><b id="avg">0:00</b><span>avg per reroute</span></div><div><b id="dchg">0</b><span>destination changes</span></div></div>
+<div class="row" style="margin-top:8px"><button onclick="bench()">Run 100-incident benchmark</button><a href="/audit.csv" style="align-self:center">Download audit CSV</a></div>
+<div id="bench"></div>
+<h2>Decision log</h2><ul id="audit"></ul>
+</aside></main><div id="toast"></div>
+<script src="/vendor/leaflet.js"></script>
+<script>
+const $=id=>document.getElementById(id),VID='AMB-01',ORIGIN=[12.8967,77.6018],C=[12.9177,77.6228];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mmss=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const post=(p,b)=>fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})}).then(r=>r.json());
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',3000)}
+const mk=id=>L.map(id,{zoomControl:false,attributionControl:false}).setView(C,13),mapL=mk('mapL'),mapR=mk('mapR');
+L.control.zoom({position:'topright'}).addTo(mapR);
+let sync=false;[[mapR,mapL],[mapL,mapR]].forEach(([a,b])=>a.on('move',()=>{if(sync)return;sync=true;b.setView(a.getCenter(),a.getZoom(),{animate:false});sync=false}));
+const tiles=[mapL,mapR].map(()=>L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,className:'dim'}));let street=false;
+function toggleStreet(){street=!street;tiles.forEach((t,i)=>street?t.addTo([mapL,mapR][i]):t.remove());$('bStreet').classList.toggle('on',street)}
+tiles.forEach(t=>t.on('tileerror',()=>{if(street){toggleStreet();toast('Offline: staying in schematic mode')}}));
+function toggleSplit(){$('maps').classList.toggle('single');$('bSplit').classList.toggle('on');setTimeout(()=>{mapL.invalidateSize();mapR.invalidateSize()},50)}
+fetch('/graph').then(r=>r.json()).then(s=>[mapL,mapR].forEach(m=>L.polyline(s,{color:'#3b4a6b',weight:1,opacity:.6,interactive:false}).addTo(m)));
+const icon=c=>L.divIcon({className:'',html:`<div class="amb" style="--c:${c}"><i></i></div>`,iconSize:[30,30],iconAnchor:[15,15]});
+const veh=L.marker(ORIGIN,{icon:icon('#22c55e'),zIndexOffset:1000}).addTo(mapR),ghost=L.marker(ORIGIN,{icon:icon('#ef4444')}).addTo(mapL);
+const routeL=L.polyline([],{color:'#38bdf8',weight:4}).addTo(mapR),baseL=L.polyline([],{color:'#ef4444',weight:4,dashArray:'8 8'}).addTo(mapR),
+prevL=L.polyline([],{color:'#22c55e',weight:6,opacity:.85}).addTo(mapR),trail=L.polyline([],{color:'#22c55e',weight:3,opacity:.5}).addTo(mapR),
+ghostL=L.polyline([],{color:'#ef4444',weight:4,opacity:.8}).addTo(mapL),incs=[],hm={};
+function glide(m,to,ms){const f=m.getLatLng();cancelAnimationFrame(m._r);const dx=(to[1]-f.lng)*Math.cos(f.lat*Math.PI/180),dy=to[0]-f.lat;
+ if(Math.hypot(dx,dy)>1e-5){const el=m.getElement()&&m.getElement().querySelector('i');if(el)el.style.transform=`rotate(${Math.atan2(dx,dy)*180/Math.PI}deg)`}
+ const t0=performance.now(),st=t=>{const k=Math.min(1,(t-t0)/ms);m.setLatLng([f.lat+(to[0]-f.lat)*k,f.lng+(to[1]-f.lng)*k]);if(k<1)m._r=requestAnimationFrame(st)};m._r=requestAnimationFrame(st)}
+let route=[],ghostRoute=[],i=0,gi=0,wrong=0,timer=null,curHosp=null,pendEta=0,t0=0;
+function drawHosp(h){const c=h.beds>=3?'#22c55e':h.beds>0?'#f59e0b':'#ef4444';
+ if(!hm[h.id])hm[h.id]=L.circleMarker([h.lat,h.lon],{radius:10,weight:2,fillOpacity:.85}).addTo(mapR);
+ hm[h.id].setStyle({color:c,fillColor:c}).bindTooltip(`${esc(h.name)}<br>${h.specialties.join(', ')}<br>free beds: ${h.beds}`)}
+fetch('/hospitals').then(r=>r.json()).then(hs=>hs.forEach(drawHosp));
+function showRank(rk){$('dest').innerHTML='<ol>'+rk.map(r=>`<li class="${r.id===curHosp?'decide':''}">${esc(r.name)}: ${mmss(r.eta_s)}, ${r.beds} beds${r.penalty_s?' (+'+r.penalty_s+'s crowding)':''}${r.id===curHosp?' - selected':''}</li>`).join('')+'</ol>'}
+function clearProp(){baseL.setLatLngs([]);prevL.setLatLngs([]);$('prop').innerHTML='<small>No pending proposal. Vehicle is on its best route.</small>'}
+function showProp(m){baseL.setLatLngs(m.baseline.coords);prevL.setLatLngs(m.chosen.coords);pendEta=m.chosen.eta_s;
+ $('cmpL').innerHTML=`Conventional ETA <b>${mmss(m.baseline.eta_s)}</b>`;$('cmpR').innerHTML=`Proposed ETA <b>${mmss(m.chosen.eta_s)}</b><span class="chip">-${mmss(Math.max(m.time_saved_s,0))}</span>`;
+ $('prop').innerHTML=`${m.new_hospital?'<div class="decide bad">DESTINATION CHANGE</div>':''}<div class="decide">${esc(m.explanation)}</div><small>Trigger: ${esc(m.trigger)}</small>
+ <ol>${m.trace.map(s=>`<li class="${s.kind}">${esc(s.text)}</li>`).join('')}</ol><div class="row"><button class="go" onclick="post('/vehicles/${VID}/approve')">Approve reroute</button><button class="no" onclick="post('/vehicles/${VID}/reject')">Reject</button></div>`;
+ $('prop').scrollIntoView({behavior:'smooth',block:'nearest'});toast('Agent proposal ready: review and approve');if($('auto').checked)setTimeout(()=>post(`/vehicles/${VID}/approve`).catch(()=>{}),900)}
+function handle(m){switch(m.type){
+ case 'dispatched':curHosp=m.vehicle.hospital_id;if(m.ranking)showRank(m.ranking);route=m.vehicle.route_coords;ghostRoute=route.slice();i=0;gi=0;wrong=0;incs.length=0;
+  routeL.setLatLngs(route);ghostL.setLatLngs(ghostRoute);trail.setLatLngs([]);clearProp();veh.setLatLng(route[0]);ghost.setLatLng(route[0]);mapR.fitBounds(routeL.getBounds(),{padding:[40,40]});
+  $('cmpL').innerHTML=$('cmpR').innerHTML=`ETA <b>${mmss(m.eta_s)}</b>`;t0=Date.now();toast('Dispatched, planned ETA '+mmss(m.eta_s));break;
+ case 'position':glide(veh,[m.lat,m.lon],520);trail.addLatLng([m.lat,m.lon]);if(m.status==='arrived'){stopSim();const left=Math.round(ghostRoute.length-1-gi);toast(left>0?`Arrived. Conventional vehicle still ${left} blocks away.`:'Arrived.')}break;
+ case 'incident':incs.push(m);[mapL,mapR].forEach(mp=>L.circle([m.lat,m.lon],{radius:m.radius_m,color:m.kind==='closure'?'#ef4444':'#f59e0b',fillOpacity:.25,weight:1}).addTo(mp));refresh();break;
+ case 'proposal':showProp(m);refresh();break;
+ case 'hospital_update':drawHosp(m);refresh();break;
+ case 'route_updated':if(m.hospital){curHosp=m.hospital.id;$('dest').innerHTML='<div class="decide">Now heading to '+esc(m.hospital.name)+'</div>'}
+  route=m.route_coords;i=0;wrong=0;routeL.setLatLngs(route);clearProp();$('cmpR').innerHTML=`GeoRescue ETA <b>${mmss(pendEta)}</b><span class="chip">-${mmss(Math.max(m.time_saved_s,0))}</span>`;toast('Rerouted, saved '+mmss(Math.max(m.time_saved_s,0)));refresh();break;
+ case 'proposal_rejected':clearProp();refresh();break;}}
+function connect(){const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');
+ ws.onopen=()=>{$('conn').textContent='live';$('conn').classList.add('on')};ws.onmessage=e=>handle(JSON.parse(e.data));
+ ws.onclose=()=>{$('conn').textContent='reconnecting';$('conn').classList.remove('on');setTimeout(connect,1500)}}
+async function refresh(){const s=await fetch('/stats').then(r=>r.json()),a=await fetch('/audit?n=200').then(r=>r.json());
+ $('saved').textContent=mmss(s.time_saved_s);$('appr').textContent=s.reroutes_approved;$('avg').textContent=mmss(s.reroutes_approved?s.time_saved_s/s.reroutes_approved:0);
+ $('dchg').textContent=a.filter(r=>r.kind==='destination_changed').length;
+ $('audit').innerHTML=a.slice(0,8).map(r=>`<li><b>${esc(r.kind.replace('_',' '))}</b> <span class="mut">${esc(r.vehicle)} ${new Date(r.ts*1000).toLocaleTimeString()}${r.detail.time_saved_s!==undefined?' | saved '+mmss(Math.max(r.detail.time_saved_s,0)):''}</span></li>`).join('')}
+async function bench(){$('bench').innerHTML='<small>Running 100 simulated incidents...</small>';const r=await fetch('/benchmark?n=100').then(r=>r.json());
+ $('bench').innerHTML=`<table><tr><td>Runs</td><td>${r.runs}</td></tr><tr><td>Mean time saved</td><td>${mmss(r.mean_s)}</td></tr><tr><td>Median</td><td>${mmss(r.median_s)}</td></tr><tr><td>p10 / p90</td><td>${mmss(r.p10_s)} / ${mmss(r.p90_s)}</td></tr><tr><td>Improved runs</td><td>${r.improved_pct}%</td></tr><tr><td>Reroute compute (mean / max)</td><td>${r.compute_ms_mean} / ${r.compute_ms_max} ms</td></tr></table><small>Simulated traffic vs static shortest path.</small>`}
+const dispatch=()=>post('/dispatch/auto',{vehicle_id:VID,origin:$('origin').value.split(',').map(Number),need:$('need').value}).then(refresh);
+const fillHosp=()=>curHosp?post('/hospitals/'+curHosp+'/beds',{beds:0}).then(r=>{if(!r.vehicles_with_proposals||!r.vehicles_with_proposals.length)toast('No active vehicle to redirect (it may have already arrived). Dispatch again, then press Hospital full.')}):toast('Dispatch first');
+function incident(kind){if(!route.length)return toast('Dispatch first');const [lat,lon]=route[Math.min(i+6,route.length-1)];post('/incidents',{lat,lon,kind,radius_m:kind==='closure'?350:500,factor:5})}
+function ghostStep(){if(!ghostRoute.length||gi>=ghostRoute.length-1)return;const p=ghost.getLatLng();let rate=1;
+ incs.forEach(c=>{if(L.latLng(c.lat,c.lon).distanceTo(p)<c.radius_m)rate=Math.min(rate,c.kind==='closure'?.2:.5)});
+ gi=Math.min(gi+rate,ghostRoute.length-1);const a=Math.floor(gi),b=Math.min(a+1,ghostRoute.length-1),f=gi-a,A=ghostRoute[a],B=ghostRoute[b];glide(ghost,[A[0]+(B[0]-A[0])*f,A[1]+(B[1]-A[1])*f],520)}
+function tick(){if(i>=route.length-1)return stopSim();let lat,lon;
+ if(wrong>0){lat=route[i][0]+0.0012;lon=route[i][1]+0.0012;wrong--}else{i++;[lat,lon]=route[i]}
+ lat+=(Math.random()-.5)*0.00008;lon+=(Math.random()-.5)*0.00008;ghostStep();post(`/vehicles/${VID}/ping`,{lat,lon})}
+function stopSim(){clearInterval(timer);timer=null;$('simbtn').textContent='2. Start'}
+function toggleSim(){if(timer)return stopSim();if(!route.length)return toast('Dispatch first');timer=setInterval(tick,+$('speed').value);$('simbtn').textContent='Pause'}
+setInterval(()=>{if(t0&&timer)$('clock').textContent=mmss((Date.now()-t0)/1000)},250);
+fetch('/config').then(r=>r.json()).then(c=>{$('origin').innerHTML=c.origins.map(o=>`<option value="${o.lat},${o.lon}">${esc(o.name)}</option>`).join('');mapR.setView(c.center,c.zoom);if(c.origins[0])veh.setLatLng([c.origins[0].lat,c.origins[0].lon])});
+connect();refresh();
+</script></body></html>
